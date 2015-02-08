@@ -1,0 +1,27 @@
+{
+  "uuid": "5cf29ae5-e844-4f53-84f3-ae7742cfa98d",
+  "shortName": "Marine",
+  "longName": "Pebble Marine",
+  "companyName": "silasbw@gmail.com",
+  "versionCode": 1,
+  "versionLabel": "0.1",
+  "watchapp": {
+    "watchface": false
+  },
+  "capabilities": [ "location" ],
+  "appKeys": {
+    "knots": 1,
+    "bearing": 2,
+    "current_knots": 3,
+    "current_bearing": 4,
+    "tide_change": 5
+  },
+  "resources": {
+    "media": [{
+      "menuIcon": true,
+      "type": "png",
+      "name": "IMAGE_MENU_ICON",
+      "file": "images/icon-28x28.png"
+    }]
+  }
+}
