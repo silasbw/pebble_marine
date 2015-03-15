@@ -14,7 +14,7 @@ js_sources = [
     'src/js/co_ops.js',
     'src/js/gps.js',
     'src/js/conditions.js',
-
+    'src/js/friscosailing.js',
     'src/js/main.js'
 ]
 built_js = 'src/js/pebble-js-app.js'

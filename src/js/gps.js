@@ -5,12 +5,14 @@ GPSHistory = function(maxNumberOfPoints) {
   function getRecordCount() {
     return Math.min(recordsCounter, maxNumberOfPoints);
   }
+  this.getRecordCount = getRecordCount;
 
   function getRecord(index) {
     var recordsIndex = 
         (recordsCounter - getRecordCount() + index) % maxNumberOfPoints;
     return records[recordsIndex];
   }
+  this.getRecord = getRecord;
 
   this.saveCoordinate = function(coord, time_in_ms) {
     var points_index = recordsCounter % maxNumberOfPoints;

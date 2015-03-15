@@ -3,7 +3,6 @@ if (typeof require !== 'undefined') {
   var XMLHttpRequest = require('xhr2');
 }
 
-
 function DateToCoOpsGmtime(date) {
   var addPadding = function(str, requiredLength) {
     while (str.length < requiredLength) {
@@ -19,11 +18,9 @@ function DateToCoOpsGmtime(date) {
     addPadding(date.getUTCMinutes().toString(), 2);
 }
 
-
 function CoOpsGmtime() {
   return DateToCoOpsGmtime(new Date());
 }
-
 
 function CoOpsGet(params, success_cb, error_cb) {
   var waterLevelProducts = [
@@ -82,7 +79,6 @@ function CoOpsGet(params, success_cb, error_cb) {
   };
   req.send(null);
 }
-
 
 if (typeof require !== 'undefined') {
   exports.get = CoOpsGet;

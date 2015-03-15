@@ -3,13 +3,11 @@ if (typeof require !== 'undefined') {
   var Pebble = {'addEventListener': function() {}};
 }
 
-
 function copyCoordinate(coord) {
   return {'latitude': coord.latitude,
           'longitude': coord.longitude,
           'speed': coord.speed};
 }
-
 
 function updateWatch(gpsHistory, conditions)
 {
@@ -28,13 +26,60 @@ function updateWatch(gpsHistory, conditions)
   );
 }
 
-
 Pebble.addEventListener('ready',
     function(e) {
-      console.log('[ready event listener]');
+      console.log('Ready event listener');
 
       var gpsHistory = new GPSHistory(10);
       var conditions = new Conditions();
+      var maxKilometersFromStation = 32.1869; // 20 miles
+      var tidesStationId = null;
+      var currentsStationId = null;
+
+      function updateConditions() {
+        var recordCount = gpsHistory.getRecordCount();
+        if (recordCount >= 1) {
+          var coordinate = gpsHistory.getRecord(recordCount - 1).coord;
+          getStations(coordinate, 'tides', function(result, error) {
+            if (result && result[0].distance < maxKilometersFromStation) {
+              console.log('Tide station: ' + result[0].station.name);
+              tidesStationId = result[0].station.id;
+            } else {
+              console.log('No tide stations');
+              tidesStationId = null;
+            }
+          });
+          getStations(coordinate, 'currents', function(result, error) {
+            if (result && result[0].distance < maxKilometersFromStation) {
+              console.log('Current station: ' + result[0].station.name);
+              currentsStationId = result[0].station.id;
+            } else {
+              console.log('No current stations');
+              currentsStationId = null;
+            }
+          });
+        }
+
+        if (currentsStationId) {
+          CoOpsGet({product: 'currents',
+                    units: 'english',
+                    station: currentsStationId,
+                    date: 'latest'},
+                   function(result) {
+                     conditions.setCurrents(result.data);
+                   });
+        }
+        if (tidesStationId) {
+          CoOpsGet({product: 'predictions',
+                    units: 'english',
+                    station: tidesStationId,
+                    begin_date: CoOpsGmtime(),
+                    range: 24},
+                   function(result) {
+                     conditions.setTide(result.predictions);
+                   });
+        }
+      }
 
       // http://www.w3.org/TR/geolocation-API/
       // Request repeated updates.
@@ -42,6 +87,9 @@ Pebble.addEventListener('ready',
         function (position) {
           var timestamp = position.timestamp;
           gpsHistory.saveCoordinate(copyCoordinate(position.coords), timestamp);
+          if (gpsHistory.getRecordCount() === 1) {
+            updateConditions();
+          }
           updateWatch(gpsHistory, conditions);
         },
         function (error) {
@@ -50,25 +98,7 @@ Pebble.addEventListener('ready',
         {'enableHighAccuracy': true});
 
       Pebble.addEventListener('appmessage', function(e) {
-        // CO-OPS conditions.
-        // SF Bay stations:
-        //   http://tidesandcurrents.noaa.gov/stations.html?type=Water+Levels
-        //   http://tidesandcurrents.noaa.gov/cdata/StationList?type=Current+Data&filter=active
-        CoOpsGet({product: 'currents',
-            units: 'english',
-            station: 's08010',
-            date: 'latest'},
-          function(result) {
-            conditions.setCurrents(result.data);
-          });
-        CoOpsGet({product: 'predictions',
-            units: 'english',
-            station: 9414863,
-            begin_date: CoOpsGmtime(),
-            range: 24},
-          function(result) {
-            conditions.setTide(result.predictions);
-          });
+        updateConditions();
       });
     }
 );
