@@ -171,30 +171,30 @@ Layer* gauge_layer_create(GRect bounds, Gauge* gauge)
 Gauge gauges[] = {
   {
     .message_key = KNOTS,
-    .units_label = "kts",
-    .type_label = "sog"
+    .units_label = "KN",
+    .type_label = "SOG"
   },
   {
     .message_key = BEARING,
     .units_label = "o",
-    .type_label = "br",
+    .type_label = "BR",
     .units_layer_create = new_top_layer
   },
   {
     .message_key = CURRENT_KNOTS,
-    .units_label = "kts",
-    .type_label = "cs"
+    .units_label = "KN",
+    .type_label = "CS"
   },
   {
     .message_key = CURRENT_BEARING,
     .units_label = "o",
-    .type_label = "cbr",
+    .type_label = "CBR",
     .units_layer_create = new_top_layer
   },
   {
     .message_key = TIDE_CHANGE,
-    .units_label = "mins",
-    .type_label = "tide"
+    .units_label = "MINS",
+    .type_label = "TIDE"
   }
 };    
 
