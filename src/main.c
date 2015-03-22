@@ -42,6 +42,7 @@ typedef struct Gauge
 static const uint32_t javascript_interval_seconds = 30;
 static const uint32_t units_width = 30;
 static const bool invert_windows = true;
+static const bool screenshot_mode = false;
 
 static uint32_t debug_count;
 static TextLayer* debug_layer;
@@ -412,12 +413,24 @@ init(void)
     .unload = gauge_window_unload,
   });
 
-  app_message_register_inbox_received(in_received_handler);
   app_message_register_inbox_dropped(in_dropped_handler);
   app_message_register_outbox_sent(out_sent_handler);
   app_message_register_outbox_failed(out_failed_handler);
   app_message_open(app_message_inbox_size_maximum(),
                    app_message_outbox_size_maximum());
+  if (!screenshot_mode) {
+    app_message_register_inbox_received(in_received_handler);
+  } else {
+    strcpy(current_data[KNOTS], "6.25");
+    strcpy(current_data[BEARING], "110");
+    strcpy(current_data[CURRENT_KNOTS], "1.87");
+    strcpy(current_data[CURRENT_BEARING], "233");
+    strcpy(current_data[TIDE_CHANGE], "H46");
+    strcpy(current_data[LATITUDE], "37.77624");
+    strcpy(current_data[LONGITUDE], "-122.24741");
+    strcpy(current_data[CURRENTS_STATION_NAME], "Oakland Harbor");
+    strcpy(current_data[TIDES_STATION_NAME], "Oakland Harbor");
+  }
 
   window_set_click_config_provider(
     window, (ClickConfigProvider) config_provider);
