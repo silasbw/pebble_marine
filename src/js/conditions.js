@@ -1,5 +1,8 @@
 Conditions = function()
 {
+  this.currentsStation = null;
+  this.tidesStation = null;
+
   this.current = {
     speed: 0,
     direction: 0
@@ -9,6 +12,34 @@ Conditions = function()
     type: '',
     height: 0,
     date: null
+  };
+
+  this.getCurrentsStationId = function() {
+    if (this.currentsStation) {
+      return this.currentsStation.id;
+    }
+    return null;
+  };
+
+  this.getCurrentsStationName = function() {
+    if (this.currentsStation) {
+      return this.currentsStation.name;
+    }
+    return null;
+  };
+
+  this.getTidesStationId = function() {
+    if (this.tidesStation) {
+      return this.tidesStation.id;
+    }
+    return null;
+  };
+
+  this.getTidesStationName = function() {
+    if (this.tidesStation) {
+      return this.tidesStation.name;
+    }
+    return null;
   };
 
   this.getTideString = function()

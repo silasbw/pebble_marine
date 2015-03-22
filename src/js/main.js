@@ -11,11 +11,23 @@ function copyCoordinate(coord) {
 
 function updateWatch(gpsHistory, conditions)
 {
+  var record = gpsHistory.getRecordCount() ?
+    gpsHistory.getRecord(gpsHistory.getRecordCount() - 1) : null;
+  var latitude = record ? record.coord.latitude.toFixed(5) : '(Unknown)';
+  var longitude = record ? record.coord.longitude.toFixed(5) : '(Unknown)';
+  var tidesStationName = conditions.getTidesStationName() ?
+    conditions.getTidesStationName() : '(Unknown)';
+  var currentsStationName = conditions.getCurrentsStationName() ?
+    conditions.getCurrentsStationName() : '(Unknown)';
   var message = {'knots': gpsHistory.meanSpeedKnots().toFixed(1),
                  'bearing': gpsHistory.meanBearingDegrees().toFixed(0),
                  'current_knots': conditions.current.speed.toFixed(1),
                  'current_bearing': conditions.current.direction.toFixed(0),
-                 'tide_change': conditions.getTideString()};
+                 'tide_change': conditions.getTideString(),
+                 'latitude': latitude,
+                 'longitude': longitude,
+                 'currents_station_name': currentsStationName,
+                 'tide_station_name': tidesStationName};
 
   var transactionId = Pebble.sendAppMessage(
     message,
@@ -33,8 +45,6 @@ Pebble.addEventListener('ready',
       var gpsHistory = new GPSHistory(10);
       var conditions = new Conditions();
       var maxKilometersFromStation = 32.1869; // 20 miles
-      var tidesStationId = null;
-      var currentsStationId = null;
 
       function updateConditions() {
         var recordCount = gpsHistory.getRecordCount();
@@ -43,36 +53,36 @@ Pebble.addEventListener('ready',
           getStations(coordinate, 'tides', function(result, error) {
             if (result && result[0].distance < maxKilometersFromStation) {
               console.log('Tide station: ' + result[0].station.name);
-              tidesStationId = result[0].station.id;
+              conditions.tidesStation = result[0].station;
             } else {
               console.log('No tide stations');
-              tidesStationId = null;
+              conditions.tidesStation = null;
             }
           });
           getStations(coordinate, 'currents', function(result, error) {
             if (result && result[0].distance < maxKilometersFromStation) {
               console.log('Current station: ' + result[0].station.name);
-              currentsStationId = result[0].station.id;
+              conditions.currentsStation = result[0].station;
             } else {
               console.log('No current stations');
-              currentsStationId = null;
+              conditions.currentsStation = null;
             }
           });
         }
 
-        if (currentsStationId) {
+        if (conditions.getCurrentsStationId()) {
           CoOpsGet({product: 'currents',
                     units: 'english',
-                    station: currentsStationId,
+                    station: conditions.getCurrentsStationId(),
                     date: 'latest'},
                    function(result) {
                      conditions.setCurrents(result.data);
                    });
         }
-        if (tidesStationId) {
+        if (conditions.getTidesStationId()) {
           CoOpsGet({product: 'predictions',
                     units: 'english',
-                    station: tidesStationId,
+                    station: conditions.getTidesStationId(),
                     begin_date: CoOpsGmtime(),
                     range: 24},
                    function(result) {

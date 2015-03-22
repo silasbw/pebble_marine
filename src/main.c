@@ -14,6 +14,10 @@ enum
   CURRENT_KNOTS = 3,
   CURRENT_BEARING = 4,
   TIDE_CHANGE = 5,
+  LATITUDE = 6,
+  LONGITUDE = 7,
+  CURRENTS_STATION_NAME = 8,
+  TIDES_STATION_NAME = 9,
 
   NUMBER_OF_MESSAGE_KEYS
 };
@@ -39,8 +43,10 @@ static const uint32_t javascript_interval_seconds = 30;
 static const uint32_t units_width = 30;
 
 static Window* window;
+static Window* status_window;
 static uint32_t debug_count;
 static TextLayer* debug_layer;
+static Layer* status_layer;
 static const char* debug_values[] = {"|", "--"};
 
 static char current_data[NUMBER_OF_MESSAGE_KEYS][128];
@@ -56,7 +62,6 @@ new_large_text_layer(void)
   return text_layer;
 }
 
-
 static TextLayer*
 new_small_text_layer(void)
 {
@@ -66,7 +71,6 @@ new_small_text_layer(void)
   text_layer_set_text_alignment(text_layer, GTextAlignmentLeft);
   return text_layer;
 }
-
 
 static Layer*
 new_middle_layer(uint32_t x, uint32_t width, uint32_t height, const char *label)
@@ -84,7 +88,6 @@ new_middle_layer(uint32_t x, uint32_t width, uint32_t height, const char *label)
   return text_layer_get_layer(units_layer);
 }
 
-
 static Layer*
 new_bottom_layer(uint32_t x, uint32_t width, uint32_t height, const char *label)
 {
@@ -101,7 +104,6 @@ new_bottom_layer(uint32_t x, uint32_t width, uint32_t height, const char *label)
   return text_layer_get_layer(units_layer);
 }
 
-
 static Layer*
 new_top_layer(uint32_t x, uint32_t width, uint32_t height, const char *label)
 {
@@ -117,7 +119,6 @@ new_top_layer(uint32_t x, uint32_t width, uint32_t height, const char *label)
   return text_layer_get_layer(units_layer);
 }
 
-
 static void
 gauge_update_proc(Layer* layer, GContext* ctx)
 {
@@ -126,7 +127,8 @@ gauge_update_proc(Layer* layer, GContext* ctx)
 }
 
 
-Layer* gauge_layer_create(GRect bounds, Gauge* gauge)
+static Layer*
+gauge_layer_create(GRect bounds, Gauge* gauge)
 {
   Layer* layer = layer_create_with_data(bounds, sizeof(GaugeLayerData));
   TextLayer* data_layer = new_large_text_layer();
@@ -135,7 +137,6 @@ Layer* gauge_layer_create(GRect bounds, Gauge* gauge)
       .size = {bounds.size.w - (2*units_width), bounds.size.h}
   };
 
-  text_layer_set_text(data_layer, "---");
   layer_set_frame(text_layer_get_layer(data_layer), data_layer_bounds);
   layer_add_child(layer, text_layer_get_layer(data_layer));
 
@@ -167,8 +168,33 @@ Layer* gauge_layer_create(GRect bounds, Gauge* gauge)
   return layer;
 }
 
+static Layer*
+status_layer_create(GRect bounds, Gauge* gauge)
+{
+  Layer* layer = layer_create_with_data(bounds, sizeof(GaugeLayerData));
+  TextLayer* data_layer = new_small_text_layer();
+  GRect data_layer_bounds = {
+    .origin = {units_width, bounds.size.h / 2 - DISPLAY_SMALL_FONT_SIZE / 2},
+    .size = {bounds.size.w - units_width, DISPLAY_SMALL_FONT_SIZE}
+  };
 
-Gauge gauges[] = {
+  text_layer_set_overflow_mode(data_layer, GTextOverflowModeTrailingEllipsis);
+  layer_set_frame(text_layer_get_layer(data_layer), data_layer_bounds);
+  layer_add_child(layer, text_layer_get_layer(data_layer));
+
+  GaugeLayerData* gauge_data = layer_get_data(layer);
+  gauge_data->data_layer = data_layer;
+  gauge_data->data = current_data[gauge->message_key];
+
+  Layer* label_layer = new_middle_layer(
+      0, units_width, bounds.size.h, gauge->type_label);
+  layer_add_child(layer, label_layer);
+
+  layer_set_update_proc(layer, gauge_update_proc);
+  return layer;
+}
+
+static Gauge gauges[] = {
   {
     .message_key = KNOTS,
     .units_label = "KN",
@@ -198,11 +224,30 @@ Gauge gauges[] = {
   }
 };    
 
+static Gauge statuses[] = {
+  {
+    .message_key = LATITUDE,
+    .type_label = "LAT"
+  },
+  {
+    .message_key = LONGITUDE,
+    .type_label = "LNG"
+  },
+  {
+    .message_key = CURRENTS_STATION_NAME,
+    .type_label = "CUR"
+  },
+  {
+    .message_key = TIDES_STATION_NAME,
+    .type_label = "TIDE"
+  },
+};
 
-static void window_load(Window *window) {
+static void gauge_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
   int timestamp_height = 0;
+  Layer *gauge_layer = layer_create(bounds);
   uint32_t gauge_height =
     (bounds.size.h - timestamp_height) / NELEM(gauges);
 
@@ -216,8 +261,9 @@ static void window_load(Window *window) {
         .size = {bounds.size.w, gauge_height}
       },
       &gauges[gauge_index]);
-    layer_add_child(window_layer, gauges[gauge_index].layer);
+    layer_add_child(gauge_layer, gauges[gauge_index].layer);
   }
+  layer_add_child(window_layer, gauge_layer);
 
   debug_layer = text_layer_create((GRect) {
       .origin = {bounds.size.w - 14, 0},
@@ -227,8 +273,50 @@ static void window_load(Window *window) {
                       fonts_get_system_font(FONT_KEY_GOTHIC_14));
   text_layer_set_text_alignment(debug_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(debug_layer));
+  return;
 }
 
+static void
+gauge_window_unload(Window *window)
+{
+  for (unsigned gauge_index = 0;
+       gauge_index < NELEM(gauges);
+       gauge_index++)
+    if (gauges[gauge_index].layer)
+      layer_destroy(gauges[gauge_index].layer);
+}
+
+static void status_window_load(Window *window) {
+  Layer *window_layer = window_get_root_layer(window);
+  GRect bounds = layer_get_bounds(window_layer);
+  int timestamp_height = 0;
+  uint32_t gauge_height =
+    (bounds.size.h - timestamp_height) / NELEM(gauges);
+
+  status_layer = layer_create(bounds);
+  for (uint32_t status_index = 0;
+       status_index < NELEM(statuses);
+       status_index++)
+  {
+    statuses[status_index].layer = status_layer_create(
+      (GRect) {
+        .origin = {0, status_index * gauge_height},
+        .size = {bounds.size.w, gauge_height}
+      },
+      &statuses[status_index]);
+    layer_add_child(status_layer, statuses[status_index].layer);
+  }
+  layer_add_child(window_layer, status_layer);
+}
+
+static void status_window_unload(Window *window)
+{
+  for (unsigned status_index = 0;
+       status_index < NELEM(statuses);
+       status_index++)
+    if (statuses[status_index].layer)
+      layer_destroy(statuses[status_index].layer);
+}
 
 static void
 mark_gauges_dirty(const uint32_t message_key)
@@ -244,7 +332,6 @@ mark_gauges_dirty(const uint32_t message_key)
     }
   }
 }
-
 
 static void
 in_received_handler(DictionaryIterator* received, void* context)
@@ -265,18 +352,15 @@ in_received_handler(DictionaryIterator* received, void* context)
                       debug_values[debug_count % NELEM(debug_values)]);
 }
 
-
 static void
 in_dropped_handler(AppMessageResult reason, void *context)
 {
 }
 
-
 static void
 out_sent_handler(DictionaryIterator *sent, void *context)
 {
 }
-
 
 static void
 out_failed_handler(DictionaryIterator *failed,
@@ -284,7 +368,6 @@ out_failed_handler(DictionaryIterator *failed,
                    void *context)
 {
 }
-
 
 static void
 javascript_interval(void *data)
@@ -297,23 +380,37 @@ javascript_interval(void *data)
       1000 * javascript_interval_seconds, javascript_interval, NULL);
 }
 
-
-static void window_unload(Window *window)
+static void
+select_click_handler(ClickRecognizerRef recognizer, void *context)
 {
-  for (unsigned gauge_index = 0;
-       gauge_index < NELEM(gauges);
-       gauge_index++)
-    if (gauges[gauge_index].layer)
-      layer_destroy(gauges[gauge_index].layer);
+  window_stack_push(status_window, true);
 }
 
+static void
+select_release_handler(ClickRecognizerRef recognizer, void *context)
+{
+  window_stack_pop(true);
+}
+
+static void
+config_provider(Window *window)
+{
+  window_raw_click_subscribe(
+    BUTTON_ID_SELECT, select_click_handler, select_release_handler, NULL);
+}
 
 static void init(void)
 {
   window = window_create();
   window_set_window_handlers(window, (WindowHandlers) {
-    .load = window_load,
-    .unload = window_unload,
+    .load = gauge_window_load,
+    .unload = gauge_window_unload,
+  });
+
+  status_window = window_create();
+  window_set_window_handlers(status_window, (WindowHandlers) {
+    .load = status_window_load,
+    .unload = status_window_unload,
   });
 
   app_message_register_inbox_received(in_received_handler);
@@ -323,16 +420,20 @@ static void init(void)
   app_message_open(app_message_inbox_size_maximum(),
                    app_message_outbox_size_maximum());
 
+  window_set_click_config_provider(
+    window, (ClickConfigProvider) config_provider);
+  window_set_click_config_provider(
+    status_window, (ClickConfigProvider) config_provider);
+
   javascript_interval(NULL);
   window_stack_push(window, true);
 }
-
 
 int
 main(void)
 {
   init();
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Done initializing, pushed window: %p", window);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Done initializing");
   app_event_loop();
   window_destroy(window);
 }
