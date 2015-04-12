@@ -17,3 +17,21 @@ less than 20 miles (32 kilometers) away.
 Hold *select* to display a status window:
 
 ![alt tag](https://raw.githubusercontent.com/silasbw/pebble_marine/master/screenshot-status.png)
+
+## Developement
+
+Pebble marine requires [Pebble SDK 2.X](http://developer.getpebble.com/sdk/download/).
+
+`pebble build` requires [jshint](http://jshint.com/):
+
+```sh
+npm install jshint
+```
+
+Build, install, and check tail the logs:
+
+```sh
+pebble build
+pebble install
+pebble logs
+```
