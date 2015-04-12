@@ -6,6 +6,16 @@
 #define DISPLAY_SMALL_FONT_SIZE 14
 
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+
+/*
+ * It's unclear if this is useful for app releases or not:
+ * http://forums.getpebble.com/discussion/10685/sdk-2-0-retain-app-log-or-remove-for-production-release
+ */
+#if 0
+#undef APP_LOG
+#define APP_LOG(...)
+#endif
 
 enum
 {
@@ -19,7 +29,7 @@ enum
   CURRENTS_STATION_NAME = 8,
   TIDES_STATION_NAME = 9,
 
-  NUMBER_OF_MESSAGE_KEYS
+  END_MESSAGE_KEY
 };
 
 typedef struct GaugeLayerData
@@ -48,9 +58,10 @@ static uint32_t debug_count;
 static TextLayer* debug_layer;
 static Layer* status_layer;
 static Layer *gauge_layer;
-static const char* debug_values[] = {"|", "--"};
+static const char* debug_values[] = {"|", "/", "--", "\\", "|", "/", "--", "\\"};
 
-static char current_data[NUMBER_OF_MESSAGE_KEYS][128];
+#define INITIAL_GAUGE_VALUE "--"
+static char current_data[END_MESSAGE_KEY][128] = {INITIAL_GAUGE_VALUE};
 
 
 static TextLayer*
@@ -333,44 +344,6 @@ mark_gauges_dirty(const uint32_t message_key)
 }
 
 static void
-in_received_handler(DictionaryIterator* received, void* context)
-{
-  for (uint32_t message_key = 0;
-       message_key < NUMBER_OF_MESSAGE_KEYS;
-       message_key++)
-  {
-    Tuple* tuple = dict_find(received, message_key);
-    if (tuple && strcmp(current_data[message_key], tuple->value->cstring)) {
-      memcpy(current_data[message_key], tuple->value->cstring, tuple->length);
-      mark_gauges_dirty(message_key);
-    }
-  }
-
-  debug_count++;
-  if (debug_layer) {
-    text_layer_set_text(debug_layer,
-                        debug_values[debug_count % NELEM(debug_values)]);
-  }
-}
-
-static void
-in_dropped_handler(AppMessageResult reason, void *context)
-{
-}
-
-static void
-out_sent_handler(DictionaryIterator *sent, void *context)
-{
-}
-
-static void
-out_failed_handler(DictionaryIterator *failed,
-                   AppMessageResult reason,
-                   void *context)
-{
-}
-
-static void
 javascript_interval(void *data)
 {
   /* Poke the JS. This is an alternative to setInterval():
@@ -404,6 +377,41 @@ config_provider(Window *window)
     BUTTON_ID_SELECT, select_click_handler, select_release_handler, NULL);
 }
 
+static void
+sync_changed_handler(const uint32_t key,
+                     const Tuple* new_tuple,
+                     const Tuple* old_tuple,
+                     void* context)
+{
+  debug_count++;
+
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "sync_changed_handler(%lu): %lu, %s",
+          debug_count,
+          key,
+          new_tuple->value->cstring);
+
+  uint32_t length = MIN(sizeof(current_data[key]), new_tuple->length);
+  memcpy(current_data[key], new_tuple->value->cstring, length - 1);
+  current_data[key][length - 1] = 0;
+
+  mark_gauges_dirty(key);
+
+  if (debug_layer) {
+    text_layer_set_text(debug_layer,
+                        debug_values[debug_count % NELEM(debug_values)]);
+  }
+}
+
+static void
+sync_error_handler(DictionaryResult dict_error,
+                   AppMessageResult app_message_error,
+                   void* context)
+{
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "sync_error_handler: %u, %u",
+          dict_error,
+          app_message_error);
+}
+
 static Window*
 init(void)
 {
@@ -413,13 +421,32 @@ init(void)
     .unload = gauge_window_unload,
   });
 
-  app_message_register_inbox_dropped(in_dropped_handler);
-  app_message_register_outbox_sent(out_sent_handler);
-  app_message_register_outbox_failed(out_failed_handler);
-  app_message_open(app_message_inbox_size_maximum(),
-                   app_message_outbox_size_maximum());
   if (!screenshot_mode) {
-    app_message_register_inbox_received(in_received_handler);
+    static AppSync app_sync;
+    static uint8_t app_sync_buffer[512];
+
+    app_message_open(
+      app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+
+    Tuplet initial_values[] = {
+      TupletCString(KNOTS, INITIAL_GAUGE_VALUE),
+      TupletCString(BEARING, INITIAL_GAUGE_VALUE),
+      TupletCString(CURRENT_KNOTS, INITIAL_GAUGE_VALUE),
+      TupletCString(CURRENT_BEARING, INITIAL_GAUGE_VALUE),
+      TupletCString(TIDE_CHANGE, INITIAL_GAUGE_VALUE),
+      TupletCString(LATITUDE, INITIAL_GAUGE_VALUE),
+      TupletCString(LONGITUDE, INITIAL_GAUGE_VALUE),
+      TupletCString(CURRENTS_STATION_NAME, INITIAL_GAUGE_VALUE),
+      TupletCString(TIDES_STATION_NAME, INITIAL_GAUGE_VALUE),
+    };
+
+    app_sync_init(&app_sync,
+                  app_sync_buffer,
+                  sizeof(app_sync_buffer),
+                  initial_values, ARRAY_LENGTH(initial_values),
+                  sync_changed_handler,
+                  sync_error_handler,
+                  NULL);
   } else {
     strcpy(current_data[KNOTS], "6.25");
     strcpy(current_data[BEARING], "110");
