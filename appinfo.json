@@ -3,8 +3,8 @@
   "shortName": "Marine",
   "longName": "Pebble Marine",
   "companyName": "silasbw@gmail.com",
-  "versionCode": 2,
-  "versionLabel": "0.2",
+  "versionCode": 3,
+  "versionLabel": "0.3",
   "sdkVersion": "2",
   "watchapp": {
     "watchface": false
