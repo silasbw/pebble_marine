@@ -20,7 +20,7 @@ Hold *select* to display a status window:
 
 ## Developement
 
-Pebble marine requires [Pebble SDK 2.X](http://developer.getpebble.com/sdk/download/).
+Pebble marine requires [Pebble SDK 3.X](http://developer.getpebble.com/sdk/download/).
 
 `pebble build` requires [jshint](http://jshint.com/):
 
@@ -31,7 +31,7 @@ npm install jshint
 Build, install, and check tail the logs:
 
 ```sh
-export PEBBLE_PHONE=your phones IP address
+export PEBBLE_PHONE=your phone's IP address
 pebble build
 pebble install
 pebble logs
