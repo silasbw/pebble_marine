@@ -71,7 +71,11 @@ Conditions = function()
         var type = initialDelta < 0 ? 'L' : 'H';
         this.tide.type = type;
         this.tide.height = parseFloat(predictions[index - 1].v);
-        this.tide.date = new Date(predictions[index - 1].t + ' GMT');
+        // CoOps gives us: YYY-MM-DD HH:mm. We need to convert it to the
+        // simplified ISO, which is supported by most JS implementations.
+        // http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.1.15
+        var simplified_iso = predictions[index - 1].t.replace(' ', 'T') + 'Z';
+        this.tide.date = new Date(simplified_iso);
         return;
       }
     }
