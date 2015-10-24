@@ -51,7 +51,7 @@ typedef struct Gauge
 
 static const uint32_t javascript_interval_seconds = 30;
 static const uint32_t units_width = 30;
-static const bool invert_windows = true;
+static const bool invert_windows = false;
 static const bool screenshot_mode = false;
 
 static uint32_t debug_count;
