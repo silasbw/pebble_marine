@@ -305,11 +305,13 @@ static void gauge_window_load(Window *window) {
   text_layer_set_text_alignment(debug_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(debug_layer));
 
+#if 0
   /* Invert layer. */
   if (invert_windows) {
     layer_add_child(
       window_layer, inverter_layer_get_layer(inverter_layer_create(bounds)));
   }
+#endif
   return;
 }
 

@@ -5,11 +5,13 @@
   "companyName": "silasbw@gmail.com",
   "versionCode": 3,
   "versionLabel": "0.3",
-  "sdkVersion": "2",
+  "sdkVersion": "3",
   "watchapp": {
     "watchface": false
   },
-  "capabilities": [ "location" ],
+  "capabilities": [
+    "location"
+  ],
   "appKeys": {
     "knots": 1,
     "bearing": 2,
@@ -22,11 +24,18 @@
     "tide_station_name": 9
   },
   "resources": {
-    "media": [{
-      "menuIcon": true,
-      "type": "png",
-      "name": "IMAGE_MENU_ICON",
-      "file": "images/icon-28x28.png"
-    }]
-  }
+    "media": [
+      {
+        "menuIcon": true,
+        "type": "png",
+        "name": "IMAGE_MENU_ICON",
+        "file": "images/icon-28x28.png"
+      }
+    ]
+  },
+  "targetPlatforms": [
+    "aplite",
+    "basalt",
+    "chalk"
+  ]
 }
