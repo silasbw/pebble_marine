@@ -111,7 +111,7 @@ function msecToHours(msec) {
 }
 
 
-if (typeof require !== 'undefined') {
+if (typeof module !== 'undefined' && module.exports) {
   exports.calculateDistanceInKM = calculateDistanceInKM;
   exports.calculateBearing = calculateBearing;
   exports.GPSHistory = GPSHistory;

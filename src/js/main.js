@@ -1,8 +1,3 @@
-if (typeof require !== 'undefined') {
-  // If in nodejs, fake some dependencies.
-  var Pebble = {'addEventListener': function() {}};
-}
-
 function copyCoordinate(coord) {
   return {'latitude': coord.latitude,
           'longitude': coord.longitude,
@@ -33,7 +28,11 @@ function updateWatch(gpsHistory, conditions)
     message,
     function(e) {/* Success */},
     function(e) {
-      console.log('Error delivering message: ' + e.error.message);
+      if (e && e.error) {
+        console.warn('Error delivering message:', e.error.message);
+      } else {
+        console.warn('Error delivering message');
+      }
     }
   );
 }
@@ -112,3 +111,7 @@ Pebble.addEventListener('ready',
       });
     }
 );
+
+if (typeof module !== 'undefined' && module.exports) {
+  var Pebble = {'addEventListener': function() {}};
+}
