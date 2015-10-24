@@ -1,7 +1,3 @@
-if (typeof require !== 'undefined') {
-  var XMLHttpRequest = require('xhr2');
-}
-
 function getStations(coordinate, stationType, callback) {
   var url = 'http://friscosailing.com/api/station_search?coordinate=';
   url += coordinate.latitude.toString() + ',' + coordinate.longitude.toString();
@@ -19,6 +15,7 @@ function getStations(coordinate, stationType, callback) {
   req.send(null);
 }
 
-if (typeof require !== 'undefined') {
+if (typeof module !== 'undefined' && module.exports) {
+  var XMLHttpRequest = require('xhr2');
   exports.getStations = getStations;
 }
