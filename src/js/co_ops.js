@@ -1,8 +1,3 @@
-if (typeof require !== 'undefined') {
-  // If in nodejs, pull in some dependencies.
-  var XMLHttpRequest = require('xhr2');
-}
-
 function DateToCoOpsGmtime(date) {
   var addPadding = function(str, requiredLength) {
     while (str.length < requiredLength) {
@@ -64,8 +59,8 @@ function CoOpsGet(params, success_cb, error_cb) {
       paramsStrings.push(paramKey + '=' + request_params[paramKey]);
     }
   }
-  var url = 'http://tidesandcurrents.noaa.gov/api/datagetter?' +
-    paramsStrings.join('&');
+  var url = encodeURI('http://tidesandcurrents.noaa.gov/api/datagetter?' +
+                      paramsStrings.join('&'));
 
   var req = new XMLHttpRequest();
   req.open('GET', url);
@@ -80,7 +75,8 @@ function CoOpsGet(params, success_cb, error_cb) {
   req.send(null);
 }
 
-if (typeof require !== 'undefined') {
+if (typeof module !== 'undefined' && module.exports) {
+  var XMLHttpRequest = require('xhr2');
   exports.get = CoOpsGet;
   exports.gmtime = CoOpsGmtime;
   exports.gmtDateFormat = DateToCoOpsGmtime;
