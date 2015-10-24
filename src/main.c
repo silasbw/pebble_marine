@@ -305,7 +305,7 @@ static void gauge_window_load(Window *window) {
   text_layer_set_text_alignment(debug_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(debug_layer));
 
-#if 0
+#ifdef PBL_SDK_2
   /* Invert layer. */
   if (invert_windows) {
     layer_add_child(
