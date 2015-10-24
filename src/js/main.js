@@ -90,6 +90,7 @@ Pebble.addEventListener('ready',
         }
       }
 
+      var lastWatchUpdateMSeconds = 0;
       // http://www.w3.org/TR/geolocation-API/
       // Request repeated updates.
       var watchId = navigator.geolocation.watchPosition(
@@ -99,7 +100,13 @@ Pebble.addEventListener('ready',
           if (gpsHistory.getRecordCount() === 1) {
             updateConditions();
           }
-          updateWatch(gpsHistory, conditions);
+
+          // Rate limit watch updates to 1 a second.
+          var now = new Date().getTime();
+          if (now - lastWatchUpdateMSeconds > 1000) {
+            updateWatch(gpsHistory, conditions);
+            lastWatchUpdateMSeconds = now;
+          }
         },
         function (error) {
           console.log('Error getting position: ' + error.message);
