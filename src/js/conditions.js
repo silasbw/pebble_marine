@@ -68,7 +68,7 @@ Conditions = function()
         parseFloat(predictions[index].v);
       // Does the slope change signs?
       if (initialDelta * delta < 0) {
-        var type = initialDelta < 0 ? 'L' : 'H';
+        var type = initialDelta < 0 ? 'H' : 'L';
         this.tide.type = type;
         this.tide.height = parseFloat(predictions[index - 1].v);
         // CoOps gives us: YYY-MM-DD HH:mm. We need to convert it to the
