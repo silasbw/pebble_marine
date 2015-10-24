@@ -3,8 +3,8 @@
   "shortName": "Marine",
   "longName": "Pebble Marine",
   "companyName": "silasbw@gmail.com",
-  "versionCode": 3,
-  "versionLabel": "0.3",
+  "versionCode": 4,
+  "versionLabel": "0.4",
   "sdkVersion": "3",
   "watchapp": {
     "watchface": false
@@ -35,7 +35,6 @@
   },
   "targetPlatforms": [
     "aplite",
-    "basalt",
-    "chalk"
+    "basalt"
   ]
 }
