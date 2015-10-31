@@ -1,9 +1,11 @@
 # Pebble Marine
 
-Pebble marine displays speed (knots), bearing (degrees), current speed
-(knots), current bearing (degrees), and tides (minutes to change).
+Pebble Marine provides useful instrumentation while sailing,
+windsurfing, kayaking, paddle boarding, or boating. Your Pebble watch
+displays speed (knots), bearing (degrees), current speed (knots),
+current bearing (degrees), and tides (minutes to change).
 
-Pebble marine requires a bluetooth connection to a phone. It uses the
+Pebble Marine requires a bluetooth connection to a phone. It uses the
 [CO OPS API](http://co-ops.nos.noaa.gov/api/) to get
 current speed, current bearing, and tide predictions from the closest stations
 less than 20 miles (32 kilometers) away.
@@ -20,7 +22,7 @@ Hold *select* to display a status window:
 
 ## Developement
 
-Pebble marine requires [Pebble SDK 3.X](http://developer.getpebble.com/sdk/download/).
+Pebble Marine requires [Pebble SDK 3.X](http://developer.getpebble.com/sdk/download/).
 
 `pebble build` requires [jshint](http://jshint.com/):
 
